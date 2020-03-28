@@ -10,12 +10,14 @@ public :
     myString(const myString &S);
     ~myString();
     friend std::ostream &operator<<(std::ostream &os, const myString &S);// 输出字符串整体和长度
+    friend std::istream &operator>>(std::istream &is, myString &S);
     char &operator[](int i);  // 返回字符串中的下标为i的字符，注意i 的有效性
     void toUpper();   //转化为大写字符串
     myString &operator=(const myString &S);
     myString &operator=(const char *S);
     bool operator==(const myString& s);   //比较字符串
     myString operator+(const myString &S);
+    myString operator()(int begin, int end);
 private:
     char *pStr ;    // 指向存储字符串的空间 new char[size+1]
     int size ;      //包含字符的数目
@@ -56,6 +58,22 @@ std::ostream &operator<<(std::ostream &os, const myString &S)
 {
     os << S.pStr;
     return os;
+}
+
+std::istream &operator>>(std::istream &is, myString &S)
+{
+    delete[] S.pStr;
+    S.pStr = new char[1];
+    S.pStr[0] = 0;
+    char tmp;
+    is.get(tmp);
+    while(tmp != '\n')
+    {
+        char a[] = {tmp, '\0'};
+        S = S + myString(a);
+        is.get(tmp);
+    }
+    return is;
 }
 
 myString &myString::operator=(const myString &S)
@@ -117,16 +135,29 @@ myString myString::operator+(const myString &S)
     myString tmp(S.pStr);
     delete[] tmp.pStr;
     tmp.pStr = new char[size + S.size + 1];
+    tmp.size = size + S.size;
     char *pt = tmp.pStr, *ps = pStr;
     while(*ps)
     {
         *pt = *ps;
-        ++*pt;
-        ++*ps;
+        ++pt;
+        ++ps;
     }
     ps = S.pStr;
     strcpy(pt, ps);
     return tmp;
+}
+
+myString myString::operator()(int begin, int end)
+{
+    char tmp[end - begin + 2];
+    int i, j;
+    for(i = begin, j = 0;i <= end;i++, j++)
+    {
+        tmp[j] = this->pStr[i];
+    }
+    tmp[j] = 0;
+    return myString(tmp);
 }
 
 
@@ -140,7 +171,9 @@ int main()
     s1.toUpper();
     std::cout << s1 << std::endl;  //输出HELLO
     s1 = s2;
-    if(s2 == s1) std::cout<<"字符串相同";
-    else std::cout<<"字符串不同";
+    if(s2 == s1) std::cout<<"字符串相同"<<std::endl;
+    else std::cout<<"字符串不同"<<std::endl;
+    std::cin >> s1;
+    std::cout << s1(1, 2);
     return 0;
 }
