@@ -18,7 +18,8 @@ public :
     bool operator==(const myString& s);   //比较字符串
     myString operator+(const myString &S);
     myString operator()(int begin, int end);
-private:
+
+protected:
     char *pStr ;    // 指向存储字符串的空间 new char[size+1]
     int size ;      //包含字符的数目
 };
@@ -64,6 +65,7 @@ std::istream &operator>>(std::istream &is, myString &S)
 {
     delete[] S.pStr;
     S.pStr = new char[1];
+    S.size = 0;
     S.pStr[0] = 0;
     char tmp;
     is.get(tmp);
@@ -150,6 +152,11 @@ myString myString::operator+(const myString &S)
 
 myString myString::operator()(int begin, int end)
 {
+    if((begin < 0 || begin > size) || (end < 0 || end > size))
+    {
+        std::cerr << "Subscript error: The parameter i can't larger than size or smaller than 0!" << std::endl;
+        return myString();
+    }
     char tmp[end - begin + 2];
     int i, j;
     for(i = begin, j = 0;i <= end;i++, j++)
@@ -160,6 +167,75 @@ myString myString::operator()(int begin, int end)
     return myString(tmp);
 }
 
+
+class EditString:public myString
+{
+public:
+    explicit EditString(const char *pn = nullptr, char c = 0);
+    EditString(const myString &S, char c = 0);
+    EditString substring()const;
+    EditString &insert(const EditString &S);
+    EditString &replace(char c);
+    EditString &del_position();
+    char *s_begin()const;
+    char *s_end()const;
+private:
+    mutable int position;
+};
+
+char *EditString::s_begin()const
+{
+    return pStr;
+}
+
+char *EditString::s_end()const
+{
+    return pStr + size;
+}
+
+EditString::EditString(const char *pn, char c):myString(pn), position(0)
+{
+    if(c)
+        position = strchr(pStr, c) - pStr;
+}
+
+EditString::EditString(const myString &S, char c):myString(S), position(0)
+{
+    if(c)
+        position = strchr(pStr, c) - pStr;
+}
+
+EditString EditString::substring()const
+{
+    return EditString(&(this->pStr[position]));
+}
+
+EditString &EditString::insert(const EditString &s)
+{
+    EditString tmp = *this;
+    delete[] pStr;
+    pStr = new char[size + s.size + 1];
+    size += s.size;
+    strcpy(pStr, tmp.pStr);
+    strcpy(&(this->pStr[position]), s.pStr);
+    strcat(pStr, &(tmp.pStr[tmp.position]));
+    return *this;
+}
+
+EditString &EditString::replace(char c)
+{
+    pStr[position] = c;
+    return *this;
+}
+
+EditString &EditString::del_position()
+{
+    char *tmp = new char[position + 1];
+    std::strncpy(tmp,pStr, position + 1);
+    delete[] pStr;
+    pStr = tmp;
+    return *this;
+}
 
 int main()
 {
@@ -174,6 +250,14 @@ int main()
     if(s2 == s1) std::cout<<"字符串相同"<<std::endl;
     else std::cout<<"字符串不同"<<std::endl;
     std::cin >> s1;
-    std::cout << s1(1, 2);
+    std::cout << s1(1, 2) << std::endl;
+    EditString ES(s1, '2');
+    std::cout << ES.substring() << std::endl;
+    ES.insert(EditString("jklj"));
+    std::cout << ES << std::endl;
+    ES.replace('z');
+    std::cout << ES << std::endl;
+    ES.del_position();
+    std::cout << ES << std::endl;
     return 0;
 }
